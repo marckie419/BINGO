@@ -1,0 +1,74 @@
+body {
+    font-family: 'Arial', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: url('BG.png') no-repeat center center fixed;
+    background-size: cover;
+    color: #ffffff;
+}
+.form-container {
+    background: rgba(0, 0, 0, 0.7);
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+    width: 350px;
+    text-align: center;
+}
+.progress-container {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+.progress-container div {
+    text-align: center;
+}
+.progress-step {
+    width: 30px;
+    height: 30px;
+    background-color: #FFD700;
+    color: #333333;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 5px;
+}
+.progress-step.inactive {
+    background-color: #444444;
+}
+.form-group {
+    margin-bottom: 15px;
+}
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+}
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 10px;
+    box-sizing: border-box;
+    border-radius: 4px;
+    border: 1px solid #666666;
+    background-color: #222222;
+    color: #ffffff;
+}
+.form-group button {
+    width: 100%;
+    padding: 10px;
+    background-color: #ff4500;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+.form-group button:hover {
+    background-color: #e03e00;
+}
+#qr-reader {
+    width: 100%;
+    margin-top: 20px;
+}

@@ -4,82 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Age Verification Form</title>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background: url('BG.png') no-repeat center center fixed;
-            background-size: cover;
-            color: #ffffff;
-        }
-        .form-container {
-            background: rgba(0, 0, 0, 0.7);
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
-            width: 350px;
-            text-align: center;
-        }
-        .progress-container {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
-        .progress-container div {
-            text-align: center;
-        }
-        .progress-step {
-            width: 30px;
-            height: 30px;
-            background-color: #FFD700;
-            color: #333333;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-bottom: 5px;
-        }
-        .progress-step.inactive {
-            background-color: #444444;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-        }
-        .form-group input,
-        .form-group select {
-            width: 100%;
-            padding: 10px;
-            box-sizing: border-box;
-            border-radius: 4px;
-            border: 1px solid #666666;
-            background-color: #222222;
-            color: #ffffff;
-        }
-        .form-group button {
-            width: 100%;
-            padding: 10px;
-            background-color: #ff4500;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-        .form-group button:hover {
-            background-color: #e03e00;
-        }
-        #qr-reader {
-            width: 100%;
-            margin-top: 20px;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 </head>
 <body>
@@ -121,12 +46,17 @@
                         <input type="text" id="lastName" name="lastName" required>
                     </div>
                     <div class="form-group">
+                        <label for="suffix">Suffix</label>
+                        <input type="text" id="suffix" name="suffix">
+                    </div>
+                    <div class="form-group">
                         <label for="birthDate">Birth Date</label>
                         <input type="text" id="birthDate" name="birthDate" required>
                     </div>
+                    <input type="hidden" id="faceLivenessSessionId" name="faceLivenessSessionId">
                 </div>
                 <div id="qrSection" style="display: none;">
-                    <div id="qr-reader"></div>
+                    <div id="reader"></div>
                     <input type="hidden" id="qrCodeValue" name="qrCodeValue" required>
                 </div>
                 <div class="form-group">
@@ -144,218 +74,8 @@
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
     <script src="https://liveness.everify.gov.ph/js/everify-liveness-sdk.min.js"></script>
-    <script>
-        flatpickr("#birthDate", {
-            dateFormat: "Y-m-d",
-            maxDate: "today",
-            defaultDate: "2000-01-01"
-        });
-
-        document.getElementById('captureMethod').addEventListener('change', function() {
-            const personalInfo = document.getElementById('personalInfo');
-            const qrSection = document.getElementById('qrSection');
-            if (this.value === 'qr') {
-                personalInfo.style.display = 'none';
-                qrSection.style.display = 'block';
-                startQrReader();
-            } else {
-                personalInfo.style.display = 'block';
-                qrSection.style.display = 'none';
-                stopQrReader();
-            }
-        });
-
-                    document.getElementById('verificationForm').addEventListener('submit', function(event) {
-                event.preventDefault();
-                if (validateForm()) {
-                    startLiveness();
-                }
-            });
-
-            function validateForm() {
-                const captureMethod = document.getElementById('captureMethod').value;
-                let isValid = true;
-                if (captureMethod === 'personal') {
-                    const requiredFields = ['firstName', 'lastName', 'birthDate'];
-                    requiredFields.forEach(field => {
-                        if (!document.getElementById(field).value) {
-                            isValid = false;
-                            alert(`${field} is required`);
-                        }
-                    });
-                } else if (captureMethod === 'qr') {
-                    if (!document.getElementById('qrCodeValue').value) {
-                        isValid = false;
-                        alert('QR Code is required');
-                    }
-                }
-                return isValid;
-            }
-
-                function startLiveness() {
-                        window.eKYC().start({
-                            pubKey: 'eyJpdiI6IjNMdno2WCtTYkppRjhWVEM3d0tkd3c9PSIsInZhbHVlIjoiSXN0bFZtM1BxT2F1WmZXUjF2ZkcwUT09IiwibWFjIjoiYmRkMThkZmZkYjI0ODEyNzAxZmM0MGNjOWE2ZDQ3MTJhNTNmZjk5OGIyNjYwMDE4YTIzZTIyMTM0NTMxMGI0MCIsInRhZyI6IiJ9'
-                        }).then((data) => {
-                            console.log('Liveness response data:', data);
-                            showLivenessResult(data);
-
-                            // Check the structure of the response data
-                            console.log('Response keys:', Object.keys(data));
-                            console.log('Response values:', Object.values(data));
-                            console.log('Session ID:', data.session_id);
-
-                            // Extract session_id correctly from nested data
-                            const sessionId = data.session_id || (data.result && data.result.session_id);
-                            if (sessionId) {
-                                submitTier1(sessionId);
-                            } else {
-                                console.error('Liveness session ID not found in response');
-                                alert('Liveness session ID not found. Please try again.');
-                            }
-                        }).catch((err) => {
-                            console.log('error', err);
-                            showLivenessResult({ success: false, error: err.message });
-                        });
-                    }
-
-
-
-
-
-        function showLivenessResult(data) {
-            const responseContainer = document.getElementById('responseContainer');
-            const response = document.getElementById('response');
-            const formSection = document.getElementById('formSection');
-            
-            // Hide form section and show response container
-            formSection.style.display = 'none';
-            responseContainer.style.display = 'block';
-            
-            // Update response text
-            response.textContent = data.success ? 'Verification successful!' : `Verification failed: ${data.error}`;
-            
-            // Update progress step to Liveness
-            const livenessStep = document.getElementById('livenessStep');
-            livenessStep.classList.remove('inactive');
-        }
-
-
-
-                function submitTier1(sessionId) {
-                    const captureMethod = document.getElementById('captureMethod').value;
-                    let url, data;
-
-                    if (captureMethod === 'personal') {
-                        const formData = new FormData(document.getElementById('verificationForm'));
-                        data = {
-                            first_name: formData.get('firstName'),
-                            middle_name: formData.get('middleName'),
-                            last_name: formData.get('lastName'),
-                            face_liveness_session_id: sessionId,
-                            birth_date: formData.get('birthDate')
-                        };
-                        url = 'https://ws.everify.gov.ph/api/dev/query';
-                    } else {
-                        data = {
-                            value: document.getElementById('qrCodeValue').value,
-                            face_liveness_session_id: sessionId
-                        };
-                        url = 'https://ws.everify.gov.ph/api/dev/query/qr';
-                    }
-
-                    fetch(url, {
-                        method: 'POST',
-                        headers: {
-                            'Accept': 'application/json',
-                            'Authorization': 'Bearer TIER 1 TOKEN',
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(data)
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        console.log('Tier 1 Success:', data);
-                        document.getElementById('tier1').textContent = JSON.stringify(data, undefined, 2);
-                        submitTier2(data, sessionId);
-                    })
-                    .catch(error => {
-                        console.error('Tier 1 Error:', error);
-                        alert('Tier 1 verification failed. Please try again.');
-                    });
-                }
-
-
-                function submitTier2(tier1Data, sessionId) {
-                    const captureMethod = document.getElementById('captureMethod').value;
-                    let data, url = 'https://ws.everify.gov.ph/api/dev/query/qr';
-
-                    if (captureMethod === 'personal') {
-                        data = {
-                            tier1Response: tier1Data,
-                            face_liveness_session_id: sessionId
-                        };
-                    } else {
-                        data = {
-                            value: document.getElementById('qrCodeValue').value,
-                            tier1Response: tier1Data,
-                            face_liveness_session_id: sessionId
-                        };
-                    }
-
-                    fetch(url, {
-                        method: 'POST',
-                        headers: {
-                            'Accept': 'application/json',
-                            'Authorization': 'Bearer TIER 2 TOKEN',
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(data)
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        console.log('Tier 2 Success:', data);
-                        document.getElementById('tier2').textContent = JSON.stringify(data, undefined, 2);
-                        alert('Verification successful!');
-                        const completeStep = document.querySelectorAll('.progress-step')[2];
-                        completeStep.classList.remove('inactive');
-                    })
-                    .catch(error => {
-                        console.error('Tier 2 Error:', error);
-                        alert('Tier 2 verification failed. Please try again.');
-                    });
-                }
-
-
-
-        let qrReader;
-
-        function startQrReader() {
-            qrReader = new Html5Qrcode("qr-reader");
-            qrReader.start(
-                { facingMode: "environment" }, 
-                { fps: 10, qrbox: 250 },
-                (qrCodeMessage) => {
-                    document.getElementById('qrCodeValue').value = qrCodeMessage;
-                    alert('QR Code detected: ' + qrCodeMessage);
-                    qrReader.stop();
-                },
-                (errorMessage) => {
-                    console.log('QR Code no longer in front of camera.');
-                }
-            ).catch((err) => {
-                console.log('Unable to start QR code scanning: ' + err);
-            });
-        }
-
-        function stopQrReader() {
-            if (qrReader) {
-                qrReader.stop().catch((err) => {
-                    console.log('Unable to stop QR code scanning: ' + err);
-                });
-            }
-        }
-    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.4/html5-qrcode.min.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
